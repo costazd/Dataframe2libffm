@@ -11,16 +11,14 @@ Example below
 
 '''
 
-category_column = ['label','creativeID','userID','positionID','connectionType','telecomsOperator']
-numerical_column = ['clickTime']
-
 
 class FFMFormat:
     def __init__(self):
         self.field_index_ = None
         self.feature_index_ = None
         self.y = None
-
+        self.category_column=[]
+        
     def fit(self, df, y=None):
         self.y = y
         df_ffm = df[df.columns.difference([self.y])]
@@ -60,9 +58,12 @@ class FFMFormat:
 
         for col, val in row.loc[row.index != self.y].to_dict().items():
             col_type = t[col]
+#             print(col, col_type, col_type.kind)
+            if col_type.kind=='i':
+                val = int(val)
             name = '{}_{}'.format(col, val)
             # if col_type.kind == 'O':
-            if col in category_column:
+            if col in self.category_column:
                 ffm.append('{}:{}:1'.format(self.field_index_[col],
                                             self.feature_index_[name]))
             else:
@@ -78,10 +79,8 @@ class FFMFormat:
 
 
 if __name__ == '__main__':
-    train_path = 'train.csv'
-    train_df = pd.read_csv(train_path, sep=',')
-    train_df = train_df.drop(['conversionTime','clickTime'], axis=1)
-
+    category_column = useful_col.columns.tolist()
     ffm_train = FFMFormat()
-    ffm_train_data = ffm_train.fit_transform(train_df, y='label')
-    ffm_train_data.to_csv(path='train.ffm', index=False)
+    ffm_train.category_column=category_column
+
+    ffm_useful_col = ffm_train.fit_transform(useful_col, y='event_type_index')
